@@ -32,7 +32,7 @@ class PreUpdate {
 	}
 
 	/**
-	 * @return array
+	 * @return string[] array of application ids
 	 */
 	public function getMissingApps(){
 		$installedApps = $this->appManager->getInstalledApps();

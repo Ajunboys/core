@@ -50,8 +50,7 @@ class CheckApps extends Base {
 		parent::configure();
 		$this
 			->setName('upgrade:checkapps')
-			->setDescription('Check if there are enabled apps with missing code.')
-		;
+			->setDescription('Check if there are enabled apps with missing code.');
 	}
 
 	/**
@@ -71,8 +70,6 @@ class CheckApps extends Base {
 			} else {
 				$this->writeArrayInOutputFormat($input, $output, [ 'missing' => $missingApps ]);
 			}
-
-
 			return 1;
 		}
 		return 0;
