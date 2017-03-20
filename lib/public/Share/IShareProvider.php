@@ -94,7 +94,7 @@ interface IShareProvider {
 	 * Get all shares by the given user
 	 *
 	 * @param string $userId
-	 * @param int $shareType
+	 * @param \OC\Share\Constants $shareType
 	 * @param Node|null $node
 	 * @param bool $reshares Also get the shares where $user is the owner instead of just the shares where $user is the initiator
 	 * @param int $limit The maximum number of shares to be returned, -1 for all shares
@@ -108,7 +108,7 @@ interface IShareProvider {
 	 * Get all shares by the given user for specified shareTypes array
 	 *
 	 * @param string $userId
-	 * @param int[] $shareTypes
+	 * @param \OC\Share\Constants[] $shareTypes
 	 * @param Node[] $nodeIDs
 	 * @param bool $reshares - Also get the shares where $user is the owner instead of just the shares where $user is the initiator
 	 * @return \OCP\Share\IShare[]
@@ -136,11 +136,24 @@ interface IShareProvider {
 	 */
 	public function getSharesByPath(Node $path);
 
+
 	/**
-	 * Get shared with the given user
+	 * Get shared with the given user for shares of all supported share types for this share provider,
+	 * with file_source predicate specified ($node is Node) or
+	 * without ($node is null and scan over file_source is performed).
 	 *
 	 * @param string $userId get shares where this user is the recipient
-	 * @param int $shareType
+	 * @param Node|null $node
+	 * @return \OCP\Share\IShare[]
+	 * @since 10.0.0
+	 */
+	public function getAllSharedWith($userId, $node);
+	
+	/**
+	 * Get shared with the given user specifying share type predicate for this specific share provider
+	 *
+	 * @param string $userId get shares where this user is the recipient
+	 * @param \OC\Share\Constants $shareType
 	 * @param Node|null $node
 	 * @param int $limit The max number of entries returned, -1 for all
 	 * @param int $offset
@@ -164,7 +177,7 @@ interface IShareProvider {
 	 * So clean up the relevant shares.
 	 *
 	 * @param string $uid
-	 * @param int $shareType
+	 * @param \OC\Share\Constants $shareType
 	 * @since 9.1.0
 	 */
 	public function userDeleted($uid, $shareType);

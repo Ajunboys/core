@@ -5,6 +5,7 @@
  * @author phisch <git@philippschaffrath.de>
  * @author Roeland Jago Douma <rullzer@owncloud.com>
  * @author Vincent Petry <pvince81@owncloud.com>
+ * @author Piotr Mrowczynski <piotr@owncloud.com>
  *
  * @copyright Copyright (c) 2017, ownCloud GmbH
  * @license AGPL-3.0
@@ -778,6 +779,116 @@ class DefaultShareProvider implements IShareProvider {
 
 
 		return $shares;
+	}
+
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getAllSharedWith($userId, $node) {
+		// Create array of sharedWith objects (target user -> $userId or group of which user is a member
+		$user = $this->userManager->get($userId);
+		$allGroups = $this->groupManager->getUserGroups($user, 'sharing');
+
+		/** @var Share[] $shares */
+		$shares = [];
+		$groupShares = [];
+
+		// Check if user is member of some groups and chunk them
+		$sharedWithGroup = array_map(function(IGroup $group) { return $group->getGID(); }, $allGroups);
+		$sharedWithGroupChunks = array_chunk($sharedWithGroup, 100);
+
+		// Check how many group chunks do we need
+		$sharedWithGroupChunksNo = count($sharedWithGroupChunks);
+
+		// Check that if there are no groups for users, we still query for a shared with user
+		$chunkNoRequired = $sharedWithGroupChunksNo > 0 ? $sharedWithGroupChunksNo : 1;
+
+		for ($chunkNo = 0; $chunkNo < $chunkNoRequired; $chunkNo++) {
+			// Query for user/group shares
+			$qb = $this->dbConn->getQueryBuilder();
+			$qb->select('s.*', 'f.fileid', 'f.path')
+				->selectAlias('st.id', 'storage_string_id')
+				->from('share', 's')
+				->leftJoin('s', 'filecache', 'f', $qb->expr()->eq('s.file_source', 'f.fileid'))
+				->leftJoin('f', 'storages', 'st', $qb->expr()->eq('f.storage', 'st.numeric_id'));
+
+			// Apply predicate on item_type
+			$qb->where($qb->expr()->orX(
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
+				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
+			));
+
+			// Apply predicate on node if provided
+			if ($node !== null) {
+				$qb->andWhere($qb->expr()->eq('file_source', $qb->createNamedParameter($node->getId())));
+			}
+			
+			// Handle chunking logic
+			if ($chunkNo === 0 && $sharedWithGroupChunksNo > 0) {
+				// There are groups to be checked and this is first chunk
+				// In the first chunk, check for shared with user along with groups
+				$groups = $sharedWithGroupChunks[$chunkNo];
+				$qb->andWhere($qb->expr()->orX(
+					$qb->expr()->andX(
+						$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_GROUP)),
+						$qb->expr()->in('share_with', $qb->createNamedParameter(
+							$groups,
+							IQueryBuilder::PARAM_STR_ARRAY
+						))
+					),
+					$qb->expr()->andX(
+						$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_USER)),
+						$qb->expr()->eq('share_with', $qb->createNamedParameter($userId))
+					)
+				));
+			} else if ($sharedWithGroupChunksNo > 0) {
+				// There are groups to be checked and this is consecutive chunk
+				$groups = $sharedWithGroupChunks[$chunkNo];
+				$qb->andWhere(
+					$qb->expr()->andX(
+						$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_GROUP)),
+						$qb->expr()->in('share_with', $qb->createNamedParameter(
+							$groups,
+							IQueryBuilder::PARAM_STR_ARRAY
+						))
+					)
+				);
+			} else {
+				// There are groups to be checked
+				$qb->andWhere(
+					$qb->expr()->andX(
+						$qb->expr()->eq('share_type', $qb->createNamedParameter(\OCP\Share::SHARE_TYPE_USER)),
+						$qb->expr()->eq('share_with', $qb->createNamedParameter($userId))
+					)
+				);
+			}
+
+			$cursor = $qb->execute();
+
+			while($data = $cursor->fetch()) {
+				if ($this->isAccessibleResult($data)) {
+					$share = $this->createShare($data);
+					if ($share->getShareType() === \OCP\Share::SHARE_TYPE_GROUP){
+						$groupShares[] = $share;
+					} else {
+						$shares[] = $share;
+					}
+				}
+			}
+			$cursor->closeCursor();
+		}
+
+		// Resolve shares
+		// TODO: will be optimised by https://github.com/owncloud/core/pull/27434
+		$resolveGroupShares = [];
+		foreach($groupShares as $groupShare) {
+			$resolveGroupShares[] = $this->resolveGroupShare($groupShare, $userId);
+		}
+
+		// Merge and return
+		$resolvedShares = array_merge($shares, $resolveGroupShares);
+		return $resolvedShares;
 	}
 
 	/**

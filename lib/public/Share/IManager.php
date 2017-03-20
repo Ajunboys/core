@@ -90,7 +90,7 @@ interface IManager {
 	 * Get all shares shared by (initiated) by the provided user for specific node IDs.
 	 *
 	 * @param string $userId
-	 * @param int[] $shareTypes
+	 * @param \OC\Share\Constants[] $shareTypes
 	 * @param int[] $nodeIDs
 	 * @param bool $reshares
 	 * @return IShare[]
@@ -102,7 +102,7 @@ interface IManager {
 	 * Get shares shared by (initiated) by the provided user.
 	 *
 	 * @param string $userId
-	 * @param int $shareType
+	 * @param \OC\Share\Constants $shareType
 	 * @param Node|null $path
 	 * @param bool $reshares
 	 * @param int $limit The maximum number of returned results, -1 for all results
@@ -112,12 +112,25 @@ interface IManager {
 	 */
 	public function getSharesBy($userId, $shareType, $path = null, $reshares = false, $limit = 50, $offset = 0);
 
+
+	/**
+	 * Get shares shared with $userId for specified share types.
+	 * Filter by $node if provided
+	 * 
+	 * @param string $userId
+	 * @param \OC\Share\Constants[] $shareTypes
+	 * @param Node|null $node
+	 * @return IShare[]
+	 * @since 10.0.0
+	 */
+	public function getAllSharedWith($userId, $shareTypes, $node = null);
+	
 	/**
 	 * Get shares shared with $user.
 	 * Filter by $node if provided
 	 *
 	 * @param string $userId
-	 * @param int $shareType
+	 * @param \OC\Share\Constants $shareType
 	 * @param Node|null $node
 	 * @param int $limit The maximum number of shares returned, -1 for all
 	 * @param int $offset
