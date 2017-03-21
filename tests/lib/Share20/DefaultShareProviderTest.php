@@ -1878,7 +1878,7 @@ class DefaultShareProviderTest extends TestCase {
 
 	public function testUpdateLink() {
 		$id = $this->addShareToDB(Share::SHARE_TYPE_LINK, null, 'user1', 'user2',
-			'file', 42, 'target', 31, 'tehtoken', null, 'some_name');
+			'file', 42, 'target', 31, 'tehtoken', null, null, 'some_name');
 
 		$users = [];
 		for($i = 0; $i < 6; $i++) {
