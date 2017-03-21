@@ -64,6 +64,8 @@ class Share implements \OCP\Share\IShare {
 	private $shareTime;
 	/** @var bool */
 	private $mailSend;
+	/** @var string */
+	private $name;
 
 	/** @var IRootFolder */
 	private $rootFolder;
