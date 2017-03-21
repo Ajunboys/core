@@ -750,6 +750,10 @@ class DefaultShareProviderTest extends TestCase {
 		$this->assertSame('token', $share2->getToken());
 		$this->assertSame('some_name', $share2->getName());
 		$this->assertEquals($expireDate->format(\DateTime::ISO8601), $share2->getExpirationDate()->format(\DateTime::ISO8601));
+
+		$share->setName(null);
+		$share2 = $this->provider->create($share);
+		$this->assertNull($share2->getName());
 	}
 
 	public function testGetShareByToken() {
@@ -1923,6 +1927,11 @@ class DefaultShareProviderTest extends TestCase {
 		$this->assertSame(1, $share2->getPermissions());
 		$this->assertSame('anothertoken', $share2->getToken());
 		$this->assertSame('another_name', $share2->getName());
+
+		$share->setName(null);
+
+		$share2 = $this->provider->update($share);
+		$this->assertNull($share2->getName());
 	}
 
 	public function testUpdateLinkRemovePassword() {

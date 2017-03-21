@@ -325,7 +325,7 @@ interface IShare {
 	public function getMailSend();
 
 	/**
-	 * Set an arbitrary name for this share
+	 * Set a user-defined name for this share
 	 *
 	 * @param string $name
 	 * @since 10.0.0
@@ -333,7 +333,7 @@ interface IShare {
 	public function setName($name);
 
 	/**
-	 * Get arbitrary name for this share
+	 * Get user-defined name for this share
 	 *
 	 * @return string $name
 	 * @since 10.0.0
