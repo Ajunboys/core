@@ -34,7 +34,6 @@ class Version20170320173955 implements ISchemaMigration {
 
 		// Arbitrary name for the share
 		$table->addColumn('name', 'string', [
-			'default' => '',
 			'notnull' => false,
 			'length' => 64,
 		]);
